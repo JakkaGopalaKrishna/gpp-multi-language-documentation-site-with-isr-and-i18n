@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Add smooth scrolling for the Table of Contents */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Ensure the background matches your theme toggle */
+body {
+  @apply bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100;
+}

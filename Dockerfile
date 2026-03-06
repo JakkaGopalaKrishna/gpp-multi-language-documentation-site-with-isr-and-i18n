@@ -1,0 +1,33 @@
+# Stage 1: Install dependencies
+FROM node:18-alpine AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Stage 2: Build the app
+FROM node:18-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+# Disable telemetry during build
+ENV NEXT_TELEMETRY_DISABLED 1
+RUN npm run build
+
+# Stage 3: Runner
+FROM node:18-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV production
+ENV NEXT_TELEMETRY_DISABLED 1
+
+# Install curl for the healthcheck (Requirement 1)
+RUN apk add --no-cache curl
+
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/_docs ./_docs
+
+EXPOSE 3000
+CMD ["npm", "start"]
